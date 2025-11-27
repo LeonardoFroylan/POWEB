@@ -1,19 +1,31 @@
 import {createContext, useState, useContext} from "react";
 import {registerRequest} from "../api/auth.js";
+import { useEffect } from "react";
 
 export const AuthContext = createContext();
 export const useAuth = () => {
-    console.log("useAuth called");
+    
     const context= useContext(AuthContext);
     if(!context){
         throw new Error("useAuth debe usarse con AuthProvider");
     }
+    console.log("AuthContext:", context);
     return context;
 }
 
 export const AuthProvider = ({children}) =>{
    const [user, setUser] = useState(null);
    const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const [errors, setErrors] = useState([]);
+   
+   useEffect(() =>{
+    if(errors.length > 0){
+        const timer = setTimeout(() =>{
+            setErrors([]);
+        }, 5000);
+        return () => clearTimeout(timer);
+    }
+   }, [errors]);  
 
    const signup = async (user) =>{
     try {
@@ -23,6 +35,7 @@ export const AuthProvider = ({children}) =>{
     setIsAuthenticated(true);
     } catch (error) {
         console.log(error);
+        setErrors(error.response.data);
    }
 }
    return (
@@ -31,9 +44,11 @@ export const AuthProvider = ({children}) =>{
       signup, 
       user,
       isAuthenticated,
+      errors,
       }}>
         {children}
     </AuthContext.Provider>
 
    );
 }
+
